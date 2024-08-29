@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Execution Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">Command Execution Tool</h1>
+        <div class="mb-4">
+            <input type="text" id="commandInput" class="w-full p-2 border rounded" placeholder="Enter command">
+        </div>
+        <button id="sendButton" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Send</button>
+        <div id="loader" class="hidden mt-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+        <pre id="output" class="mt-4 p-4 bg-gray-100 rounded-lg whitespace-pre-wrap"></pre>
+    </div>
+
+    <script>
+        const commandInput = document.getElementById('commandInput');
+        const sendButton = document.getElementById('sendButton');
+        const output = document.getElementById('output');
+        const loader = document.getElementById('loader');
+
+        sendButton.addEventListener('click', async () => {
+            const command = commandInput.value;
+            if (!command) return;
+
+            output.textContent = '';
+            loader.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ command }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    output.textContent = `stdout:\n${data.stdout}\n\nstderr:\n${data.stderr}`;
+                } else {
+                    output.textContent = `Error: ${data.error}\n\nstdout:\n${data.stdout}\n\nstderr:\n${data.stderr}`;
+                }
+            } catch (error) {
+                output.textContent = `Error: ${error.message}`;
+            } finally {
+                loader.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
