@@ -3,22 +3,37 @@ package main
 import (
 	"bytes"
 	"embed"
+	"io/fs"
 	"net/http"
 	"os/exec"
 
 	"github.com/gin-gonic/gin"
 )
 
-var frontend embed.FS
+//go:embed frontend
+var frontendFS embed.FS
 
 func main() {
 	r := gin.Default()
 
+	// Add CORS middleware
+	r.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
+
 	// Serve static files
+	frontend, _ := fs.Sub(frontendFS, "frontend")
 	r.StaticFS("/", http.FS(frontend))
 
 	// API endpoint for command execution
-	r.POST("/execute", func(c *gin.Context) {
+	r.POST("/", func(c *gin.Context) {
 		var request struct {
 			Command string `json:"command"`
 		}

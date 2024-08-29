@@ -25,31 +25,37 @@
         const output = document.getElementById('output');
         const loader = document.getElementById('loader');
 
+        const API_URL = '/';
+
         sendButton.addEventListener('click', async () => {
             const command = commandInput.value;
             if (!command) return;
 
-            output.textContent = '';
+            output.textContent = 'Sending request...';
             loader.classList.remove('hidden');
 
             try {
-                const response = await fetch('/execute', {
+                console.log('Sending request to:', API_URL);
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ command }),
                 });
+                console.log('Response received:', response);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
                 const data = await response.json();
+                console.log('Data:', data);
 
-                if (response.ok) {
-                    output.textContent = `stdout:\n${data.stdout}\n\nstderr:\n${data.stderr}`;
-                } else {
-                    output.textContent = `Error: ${data.error}\n\nstdout:\n${data.stdout}\n\nstderr:\n${data.stderr}`;
-                }
+                output.textContent = `stdout:\n${data.stdout}\n\nstderr:\n${data.stderr}`;
             } catch (error) {
-                output.textContent = `Error: ${error.message}`;
+                console.error('Fetch error:', error);
+                output.textContent = `Error: ${error.message}\n\nPlease check the console for more details.`;
             } finally {
                 loader.classList.add('hidden');
             }
