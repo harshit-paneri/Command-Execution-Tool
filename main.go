@@ -10,13 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed frontend
 var frontendFS embed.FS
 
 func main() {
 	r := gin.Default()
 
-	// Add CORS middleware
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -28,11 +26,9 @@ func main() {
 		c.Next()
 	})
 
-	// Serve static files
 	frontend, _ := fs.Sub(frontendFS, "frontend")
 	r.StaticFS("/", http.FS(frontend))
 
-	// API endpoint for command execution
 	r.POST("/", func(c *gin.Context) {
 		var request struct {
 			Command string `json:"command"`
