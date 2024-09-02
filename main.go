@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os/exec"
-
+	"runtime"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +14,12 @@ var frontendFS embed.FS
 
 func main() {
 	r := gin.Default()
+
+	//Starting frontend server
+	go func() {
+		http.Handle("/", http.FileServer(http.Dir("./frontend")))
+		http.ListenAndServe(":3000", nil)
+	}()
 
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
@@ -39,7 +45,12 @@ func main() {
 			return
 		}
 
-		cmd := exec.Command("sh", "-c", request.Command)
+		cmd := exec.Command("")
+		if runtime.GOOS=="windows" {
+			cmd = exec.Command("cmd", "/C", request.Command)
+		} else {
+			cmd = exec.Command("sh", "-c", request.Command)
+		}
 
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
@@ -53,6 +64,7 @@ func main() {
 				"stdout": stdout.String(),
 				"stderr": stderr.String(),
 			})
+			println(err.Error())
 			return
 		}
 
@@ -61,6 +73,8 @@ func main() {
 			"stderr": stderr.String(),
 		})
 	})
+
+	println("Frontend should run on : http://localhost:3000/")
 
 	r.Run(":31337")
 }
